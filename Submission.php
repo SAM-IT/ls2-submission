@@ -61,8 +61,12 @@
 			// We also add the api key to the data for maximum compatibility.
 			$data = array(
 				'response' => $response,
-				'apikey' => $this->get('apikey')
+				'surveyId' => $event->get('surveyId')
 			);
+			if ($this->get('api_data', null, null, false))
+			{
+				$data['apikey'] = $this->get('apikey');
+			}
 			$result = $this->postData($data);
 			$this->event->setContent($this, $result['contents'], 'submission');
 
@@ -70,26 +74,26 @@
 
 		public function postData($data)
         {
-            if ($this->get('apikey') != null)
-            {
-                $context = stream_context_create(array('http' => array(
-                    'method' => 'POST',
-                    'user_agent' => 'Limesurvey submission plugin.',
-                    'content' => json_encode($data),
-                    'header' => array(
-                        "Content-Type: application/json",
-                        "Accept: application/json",
-						"Authorization: Bearer " . $this->get('apikey')
-                    ),
-                    'timeout' => 10,
-                    'ignore_errors' => true
-                )));
-				$result = file_get_contents($this->get('url'), false, $context);
-				$statusCode = intval(explode(' ', $http_response_header[0])[1]);
-				return array('code' => $statusCode, 'contents' => $result);
-            }
-            return 'No data submitted.';
-        }
+            $headers = array(
+				"Content-Type: application/json",
+				"Accept: application/json",
+			);
+			if ($this->get('api_header', null, null, false))
+			{
+				$headers[] = "Authorization: Bearer " . $this->get('apikey', null, null, '');
+			}
+			$context = stream_context_create(array('http' => array(
+				'method' => 'POST',
+				'user_agent' => 'Limesurvey submission plugin.',
+				'content' => json_encode($data),
+				'header' => $headers,
+				'timeout' => 10,
+				'ignore_errors' => true
+			)));
+			$result = file_get_contents($this->get('url'), false, $context);
+			$statusCode = intval(explode(' ', $http_response_header[0])[1]);
+			return array('code' => $statusCode, 'contents' => $result);
+		}
     }
 
 
