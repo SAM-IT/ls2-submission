@@ -18,12 +18,12 @@
                 'label' => 'Target URL'
             ),
 			'api_bearer' => array(
-				'type' => 'boolean',
+				'type' => 'checkbox',
 				'label' => 'Send API key as bearer token in http auth header.',
 				'default' => true
 			),
 			'api_data' => array(
-				'type' => 'boolean',
+				'type' => 'checkbox',
 				'label' => 'Send API key as part of the json data.',
 				'default' => false
 			)
@@ -63,7 +63,7 @@
 				'response' => $response,
 				'apikey' => $this->get('apikey')
 			);
-			$this->postData($data);
+			$result = $this->postData($data);
 			$this->event->setContent($this, $result['contents'], 'submission');
 
         }
