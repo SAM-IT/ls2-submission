@@ -17,6 +17,16 @@
                 'type' => 'string',
                 'label' => 'Target URL'
             ),
+			'api_bearer' => array(
+				'type' => 'boolean',
+				'label' => 'Send API key as bearer token in http auth header.',
+				'default' => true
+			),
+			'api_data' => array(
+				'type' => 'boolean',
+				'label' => 'Send API key as part of the json data.',
+				'default' => false
+			)
         );
         protected $storage = 'DbStorage';
         
@@ -48,6 +58,7 @@
 
             // Get the response information.
             $response = $this->pluginManager->getAPI()->getResponse($event->get('surveyId'), $event->get('responseId'));
+			// We also add the api key to the data for maximum compatibility.
 			$data = array(
 				'response' => $response,
 				'apikey' => $this->get('apikey')
@@ -59,7 +70,7 @@
 
 		public function postData($data)
         {
-            if ($this->get('apikey') != null && $this->get('apikey') != null)
+            if ($this->get('apikey') != null)
             {
                 $context = stream_context_create(array('http' => array(
                     'method' => 'POST',
@@ -68,6 +79,7 @@
                     'header' => array(
                         "Content-Type: application/json",
                         "Accept: application/json",
+						"Authorization: Bearer " . $this->get('apikey')
                     ),
                     'timeout' => 10,
                     'ignore_errors' => true
