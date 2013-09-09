@@ -19,13 +19,13 @@
             ),
 			'api_bearer' => array(
 				'type' => 'checkbox',
-				'label' => 'Send API key as bearer token in http auth header.',
-				'default' => true
+				'default' => true,
+				'label' => 'Send API key in bearer token',
 			),
 			'api_data' => array(
 				'type' => 'checkbox',
-				'label' => 'Send API key as part of the json data.',
-				'default' => false
+				'default' => false,
+				'label' => 'Send API key in json data',
 			)
         );
         protected $storage = 'DbStorage';
