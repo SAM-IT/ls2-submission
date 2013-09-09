@@ -9,7 +9,7 @@
          * Plugin settings
          */
         protected $settings = array(
-            'apikey' => array(
+            'apiKey' => array(
                 'type' => 'string',
                 'label' => 'API key'
             ),
@@ -17,12 +17,12 @@
                 'type' => 'string',
                 'label' => 'Target URL'
             ),
-			'api_bearer' => array(
+			'apiBearer' => array(
 				'type' => 'checkbox',
 				'default' => true,
 				'label' => 'Send API key in bearer token',
 			),
-			'api_data' => array(
+			'apiData' => array(
 				'type' => 'checkbox',
 				'default' => false,
 				'label' => 'Send API key in json data',
@@ -63,9 +63,9 @@
 				'response' => $response,
 				'surveyId' => $event->get('surveyId')
 			);
-			if ($this->get('api_data', null, null, false))
+			if ($this->get('apiData', null, null, false))
 			{
-				$data['apikey'] = $this->get('apikey');
+				$data['apiKey'] = $this->get('apiKey');
 			}
 			$result = $this->postData($data);
 			$this->event->setContent($this, $result['contents'], 'submission');
@@ -78,9 +78,9 @@
 				"Content-Type: application/json",
 				"Accept: application/json",
 			);
-			if ($this->get('api_header', null, null, false))
+			if ($this->get('apiHeader', null, null, false))
 			{
-				$headers[] = "Authorization: Bearer " . $this->get('apikey', null, null, '');
+				$headers[] = "Authorization: Bearer " . $this->get('apiKey', null, null, '');
 			}
 			$context = stream_context_create(array('http' => array(
 				'method' => 'POST',
