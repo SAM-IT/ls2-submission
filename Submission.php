@@ -3,7 +3,7 @@
     class Submission extends PluginBase
     {
         static protected $description = 'Submission: Submit completed surveys to some URL.';
-        static protected $name = 'submission';
+        static protected $name = 'Submission';
 
         /**
          * Plugin settings
@@ -12,6 +12,10 @@
             'apikey' => array(
                 'type' => 'string',
                 'label' => 'API key'
+            ),
+			'url' => array(
+                'type' => 'string',
+                'label' => 'Target URL'
             ),
         );
         protected $storage = 'DbStorage';
