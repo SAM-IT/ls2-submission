@@ -34,12 +34,6 @@
         {
             parent::__construct($manager, $id);
             
-            // Provides survey specific settings.
-            $this->subscribe('beforeSurveySettings');
-            
-            // Saves survey specific settings.
-            $this->subscribe('newSurveySettings');
-            
             // Calls Beenz API on survey completion.
             $this->subscribe('afterSurveyComplete');
         }
