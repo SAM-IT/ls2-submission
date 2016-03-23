@@ -34,10 +34,109 @@
         {
             parent::__construct($manager, $id);
             
-            // Calls Beenz API on survey completion.
             $this->subscribe('afterSurveyComplete');
+            $this->subscribe('beforeSurveySettings');
+            $this->subscribe('newDirectRequest');
         }
-        
+
+        public function newDirectRequest()
+        {
+            $request = $this->api->getRequest();
+            if ($request->isPostRequest
+                && $this->api->checkAccess('administrator')
+                && $this->event->get('function') == 'manualSubmit'
+            ) {
+
+                $responseId = $request->getPost('responseId');
+                $surveyId = $request->getParam('surveyId');
+                if (empty($responseId)) {
+                    die('You must select a response.');
+                } elseif (null === $response = $this->api->getResponse($surveyId, $responseId)) {
+                    die('Response not found');
+                } else {
+                    $result = $this->postData($this->createData($response, $surveyId));
+                    die(strip_tags($result['contents']));
+                }
+            }
+        }
+
+        public function beforeSurveySettings()
+        {
+            $event = $this->event;
+            try {
+                $items[''] = "";
+                /** @var Response $response */
+                foreach($this->api->getResponses($event->get('survey'), [], 'submitdate is not null') as $response) {
+                    $label = "#{$response->id}";
+                    /** @var Token $token */
+                    if (null !== $token = $response->getRelated('token')) {
+                        $label .= " by {$token->firstname} {$token->firstname}";
+                    }
+                    $label .= " on {$response->submitdate}";
+                    $items[$response->id] = $label;
+                }
+
+            } catch(\Exception $e) {
+                $items = [];
+            }
+            $settings = [
+                'name' => get_class($this),
+                'settings' => [
+                    'manualSubmit' => [
+                        'type' => 'select',
+                        'label' => 'Manual submission: ',
+                        'options' => $items,
+                        'selectOptions' => [
+                            'placeholder' => "Pick a response for submission."
+                        ]
+                    ],
+                    'submitButton' => [
+                        'type' => 'link',
+                        'label' => 'Do it',
+                        'link' => $this->api->createUrl('plugins/direct', [
+                            'plugin' => $this->getName(),
+                            'function' => 'manualSubmit',
+                            'surveyId' => $this->event->get('survey')
+                        ]),
+                        'htmlOptions' => [
+                            'id' => 'manualSubmit',
+                            'onclick' => <<<JS
+return (function() {
+     var url = $('#manualSubmit').attr("href")
+     $('#manualSubmit').css('enabled', false);
+     
+     $.post(url, {
+        responseId : $('[name="plugin[Submission][manualSubmit]"]').val()
+     }, function(data) { 
+         var \$div = $('<div>')
+         $('<iframe>').attr('srcdoc', data).css({
+             width: '100%',
+             height: '100%'
+         }).appendTo(\$div);
+         \$div.dialog({
+             width: 500,
+             height: 500,
+         });
+         $('#manualSubmit').css('enabled', true);
+     });
+     return false;
+})();
+
+JS
+                            ,
+                            'style' => implode(';', [
+                                'border-radius: 5px',
+                                'background-color: green'
+
+                            ]),
+
+                        ]
+
+                    ]
+                ],
+            ];
+            $event->set("surveysettings.{$this->id}", $settings);
+        }
         /**
          * This event is fired after the survey has been completed.
          * @param PluginEvent $event
@@ -52,21 +151,26 @@
 
             // Get the response information.
             $response = $this->pluginManager->getAPI()->getResponse($event->get('surveyId'), $event->get('responseId'));
-			// We also add the api key to the data for maximum compatibility.
-			$data = array(
-				'response' => $response,
-				'surveyId' => $event->get('surveyId')
-			);
-			if ($this->get('apiData', null, null, false))
-			{
-				$data['apiKey'] = $this->get('apiKey');
-			}
-			$result = $this->postData($data);
-            $this->log($event->get('responseId'), $result['code'], $result['contents']);
+
+			$result = $this->postData($this->createData($response));
+            $this->log($event->get('responseId'), $result['code'], $event->get('surveyId'), $result['contents']);
 			$this->event->setContent($this, $result['contents'], 'submission');
 
         }
 
+        protected function createData(array $response, $surveyId)
+        {
+            // We also add the api key to the data for maximum compatibility.
+            $data = [
+                'response' => $response,
+                'surveyId' => $surveyId
+            ];
+            if ($this->get('apiData', null, null, false))
+            {
+                $data['apiKey'] = $this->get('apiKey');
+            }
+            return $data;
+        }
 		public function postData($data)
         {
             $headers = array(
@@ -90,9 +194,9 @@
             return ['code' => $statusCode, 'contents' => $result];
 		}
 
-		protected function log($responseId, $code, $result)
+		protected function log($responseId, $code, $surveyId, $result)
         {
-            $line = date(DateTime::ATOM) . " : $code : $responseId : $result\n";
+            $line = date(DateTime::ATOM) . " : $code : $responseId : $surveyId : $result\n";
             file_put_contents(__DIR__ . '/submission.log', $line, FILE_APPEND);
         }
     }
