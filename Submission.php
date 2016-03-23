@@ -62,6 +62,7 @@
 				$data['apiKey'] = $this->get('apiKey');
 			}
 			$result = $this->postData($data);
+            $this->log($event->get('responseId', $result['code'], $result['contents']));
 			$this->event->setContent($this, $result['contents'], 'submission');
 
         }
@@ -86,8 +87,14 @@
 			)));
 			$result = file_get_contents($this->get('url'), false, $context);
 			$statusCode = intval(explode(' ', $http_response_header[0])[1]);
-			return array('code' => $statusCode, 'contents' => $result);
+            return ['code' => $statusCode, 'contents' => $result];
 		}
+
+		protected function log($responseId, $code, $result)
+        {
+            $line = date(DateTime::ATOM) . " : $code : $responseId : $result\n";
+            file_put_contents(__DIR__ . '/submission.log', $line, FILE_APPEND);
+        }
     }
 
 
