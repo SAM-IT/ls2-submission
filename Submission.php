@@ -62,7 +62,7 @@
 				$data['apiKey'] = $this->get('apiKey');
 			}
 			$result = $this->postData($data);
-            $this->log($event->get('responseId', $result['code'], $result['contents']));
+            $this->log($event->get('responseId'), $result['code'], $result['contents']);
 			$this->event->setContent($this, $result['contents'], 'submission');
 
         }
