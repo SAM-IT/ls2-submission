@@ -152,7 +152,7 @@ JS
             // Get the response information.
             $response = $this->pluginManager->getAPI()->getResponse($event->get('surveyId'), $event->get('responseId'));
 
-			$result = $this->postData($this->createData($response));
+			$result = $this->postData($this->createData($response), $event->get('surveyId'));
             $this->log($event->get('responseId'), $result['code'], $event->get('surveyId'), $result['contents']);
 			$this->event->setContent($this, $result['contents'], 'submission');
 
