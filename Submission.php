@@ -76,7 +76,7 @@
                     $items[$response->id] = $label;
                 }
 
-            } catch(\Exception $e) {
+            } catch(\Throwable $e) {
                 $items = [];
             }
 
