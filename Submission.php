@@ -79,6 +79,11 @@
             } catch(\Exception $e) {
                 $items = [];
             }
+
+            if (empty($items)) {
+                return;
+            }
+
             $settings = [
                 'name' => get_class($this),
                 'settings' => [
