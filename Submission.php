@@ -196,7 +196,6 @@ JS
         private function deleteData(Response $model): array
         {
             $headers = array(
-                "Content-Type: application/json",
                 "Accept: application/json",
             );
             if ($this->get('apiHeader', null, null, false))
@@ -214,6 +213,12 @@ JS
                 'timeout' => 10,
                 'ignore_errors' => true
             )));
+            $url = $this->get('url');
+            $url .= strpos($url, '?') === false ? '?' : '&';
+            $url .= http_build_query([
+                'surveyId' => $model->getSurveyId(),
+                'responseId' => $model->id
+            ]);
             $result = file_get_contents($this->get('url'), false, $context);
             $statusCode = intval(explode(' ', $http_response_header[0])[1]);
             return ['code' => $statusCode, 'contents' => $result];
