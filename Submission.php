@@ -205,10 +205,6 @@ JS
             $context = stream_context_create(array('http' => array(
                 'method' => 'DELETE',
                 'user_agent' => 'Limesurvey submission plugin.',
-                'content' => json_encode([
-                    'surveyId' => $model->getSurveyId(),
-                    'responseId' => $model->id
-                ]),
                 'header' => $headers,
                 'timeout' => 10,
                 'ignore_errors' => true
