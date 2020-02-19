@@ -198,7 +198,7 @@ JS
             $headers = array(
                 "Accept: application/json",
             );
-            if ($this->get('apiHeader', null, null, false))
+            if ($this->get('apiKey', null, null, false))
             {
                 $headers[] = "Authorization: Bearer " . $this->get('apiKey', null, null, '');
             }
