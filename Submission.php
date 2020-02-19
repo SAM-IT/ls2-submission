@@ -48,9 +48,9 @@
             }
             try {
                 $result = $this->deleteData($model);
-                $this->log($model->id, $result['code'], $model->getSurveyId(), $result['contents']);
+                $this->log($model->id, $result['code'], $model->getSurveyId(), $result['contents'], 'DELETE');
             } catch (\Throwable $t) {
-                $this->log($model->id, 0, $model->getSurveyId(), $t->getMessage());
+                $this->log($model->id, 0, $model->getSurveyId(), $t->getMessage(), 'DELETE');
             }
         }
 
@@ -174,7 +174,7 @@ JS
             $response = $this->pluginManager->getAPI()->getResponse($event->get('surveyId'), $event->get('responseId'));
 
 			$result = $this->postData($this->createData($response, $event->get('surveyId')));
-            $this->log($event->get('responseId'), $result['code'], $event->get('surveyId'), $result['contents']);
+            $this->log($event->get('responseId'), $result['code'], $event->get('surveyId'), $result['contents'], 'POST:wq');
 			$this->event->setContent($this, $result['contents'], 'submission');
 
         }
@@ -247,9 +247,9 @@ JS
             return ['code' => $statusCode, 'contents' => $result];
 		}
 
-		private function log($responseId, $code, $surveyId, $result)
+		private function log($responseId, $code, $surveyId, $result, string $method)
         {
-            $line = date(DateTime::ATOM) . " : $code : $responseId : $surveyId : $result\n";
+            $line = date(DateTime::ATOM) . " : $method : $code : $responseId : $surveyId : $result\n";
             file_put_contents(__DIR__ . '/submission.log', $line, FILE_APPEND);
         }
     }
