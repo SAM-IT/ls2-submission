@@ -219,7 +219,7 @@ JS
                 'surveyId' => $model->getSurveyId(),
                 'responseId' => $model->id
             ]);
-            $result = file_get_contents($this->get('url'), false, $context);
+            $result = file_get_contents($url, false, $context);
             $statusCode = intval(explode(' ', $http_response_header[0])[1]);
             return ['code' => $statusCode, 'contents' => $result];
         }
