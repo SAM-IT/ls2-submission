@@ -36,7 +36,22 @@
             
             $this->subscribe('afterSurveyComplete');
             $this->subscribe('beforeSurveySettings');
+            $this->subscribe('afterModelDelete');
             $this->subscribe('newDirectRequest');
+        }
+        public function afterModelDelete()
+        {
+            $event = $this->event;
+            $model = $event->get('model');
+            if (!$model instanceof Response) {
+                return;
+            }
+            try {
+                $result = $this->deleteData($model);
+                $this->log($model->id, $result['code'], $model->getSurveyId(), $result['contents']);
+            } catch (\Throwable $t) {
+                $this->log($model->id, 0, $model->getSurveyId(), $t->getMessage());
+            }
         }
 
         public function newDirectRequest()
@@ -46,7 +61,6 @@
                 && $this->api->checkAccess('administrator')
                 && $this->event->get('function') == 'manualSubmit'
             ) {
-
                 $responseId = $request->getPost('responseId');
                 $surveyId = $request->getParam('surveyId');
                 if (empty($responseId)) {
@@ -66,7 +80,9 @@
             try {
                 $items[''] = "";
                 /** @var Response $response */
-                foreach($this->api->getResponses($event->get('survey'), [], 'submitdate is not null') as $response) {
+                foreach($this->api->getResponses($event->get('survey'), [], 'submitdate is not null', [
+                    'limit' => 5
+                ]) as $response) {
                     $label = "#{$response->id}";
                     /** @var Token $token */
                     if (null !== $token = $response->getRelated('token')) {
@@ -163,7 +179,7 @@ JS
 
         }
 
-        protected function createData(array $response, $surveyId)
+        private function createData(array $response, $surveyId)
         {
             // We also add the api key to the data for maximum compatibility.
             $data = [
@@ -176,7 +192,34 @@ JS
             }
             return $data;
         }
-		public function postData($data)
+
+        private function deleteData(Response $model): array
+        {
+            $headers = array(
+                "Content-Type: application/json",
+                "Accept: application/json",
+            );
+            if ($this->get('apiHeader', null, null, false))
+            {
+                $headers[] = "Authorization: Bearer " . $this->get('apiKey', null, null, '');
+            }
+            $context = stream_context_create(array('http' => array(
+                'method' => 'DELETE',
+                'user_agent' => 'Limesurvey submission plugin.',
+                'content' => json_encode([
+                    'surveyId' => $model->getSurveyId(),
+                    'responseId' => $model->id
+                ]),
+                'header' => $headers,
+                'timeout' => 10,
+                'ignore_errors' => true
+            )));
+            $result = file_get_contents($this->get('url'), false, $context);
+            $statusCode = intval(explode(' ', $http_response_header[0])[1]);
+            return ['code' => $statusCode, 'contents' => $result];
+        }
+
+        private function postData($data)
         {
             $headers = array(
 				"Content-Type: application/json",
@@ -199,7 +242,7 @@ JS
             return ['code' => $statusCode, 'contents' => $result];
 		}
 
-		protected function log($responseId, $code, $surveyId, $result)
+		private function log($responseId, $code, $surveyId, $result)
         {
             $line = date(DateTime::ATOM) . " : $code : $responseId : $surveyId : $result\n";
             file_put_contents(__DIR__ . '/submission.log', $line, FILE_APPEND);
