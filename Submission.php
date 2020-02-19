@@ -174,7 +174,7 @@ JS
             $response = $this->pluginManager->getAPI()->getResponse($event->get('surveyId'), $event->get('responseId'));
 
 			$result = $this->postData($this->createData($response, $event->get('surveyId')));
-            $this->log($event->get('responseId'), $result['code'], $event->get('surveyId'), $result['contents'], 'POST:wq');
+            $this->log($event->get('responseId'), $result['code'], $event->get('surveyId'), $result['contents'], 'POST');
 			$this->event->setContent($this, $result['contents'], 'submission');
 
         }
@@ -249,6 +249,7 @@ JS
 
 		private function log($responseId, $code, $surveyId, $result, string $method)
         {
+            $result = substr($result, 0, 500);
             $line = date(DateTime::ATOM) . " : $method : $code : $responseId : $surveyId : $result\n";
             file_put_contents(__DIR__ . '/submission.log', $line, FILE_APPEND);
         }
