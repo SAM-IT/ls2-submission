@@ -54,6 +54,24 @@
             }
         }
 
+        private function getResponse($surveyId, $responseId)
+        {
+            $response = \SurveyDynamic::model($surveyId)->findByPk($responseId);
+            if (!isset($response)) {
+                return null;
+            }
+            $fieldmap = createFieldMap($surveyId, 'full',null, false, $response->attributes['startlanguage']);
+            $result = [];
+            foreach($response->attributes as $key => $value) {
+                if (isset($fieldmap[$key])) {
+                    $result[viewHelper::getFieldCode($fieldmap[$key])] = $value;
+                } else {
+                    $result[$key] = $value;
+                }
+            }
+            return $result;
+        }
+
         public function newDirectRequest()
         {
             $request = $this->api->getRequest();
@@ -65,7 +83,7 @@
                 $surveyId = $request->getParam('surveyId');
                 if (empty($responseId)) {
                     die('You must select a response.');
-                } elseif (null === $response = $this->api->getResponse($surveyId, $responseId)) {
+                } elseif (null === $response = $this->getResponse($surveyId, $responseId)) {
                     die('Response not found');
                 } else {
                     $result = $this->postData($this->createData($response, $surveyId));
@@ -171,7 +189,7 @@ JS
             }
 
             // Get the response information.
-            $response = $this->pluginManager->getAPI()->getResponse($event->get('surveyId'), $event->get('responseId'));
+            $response = $this->getResponse($event->get('surveyId'), $event->get('responseId'));
 
 			$result = $this->postData($this->createData($response, $event->get('surveyId')));
             $this->log($event->get('responseId'), $result['code'], $event->get('surveyId'), $result['contents'], 'POST');
