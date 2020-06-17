@@ -62,6 +62,7 @@
             }
             $fieldmap = createFieldMap($surveyId, 'full',null, false, $response->attributes['startlanguage']);
             $result = [];
+            Yii::import('application.helpers.viewHelper');
             foreach($response->attributes as $key => $value) {
                 if (isset($fieldmap[$key])) {
                     $result[viewHelper::getFieldCode($fieldmap[$key])] = $value;
