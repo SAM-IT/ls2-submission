@@ -35,7 +35,6 @@
             parent::__construct($manager, $id);
             
             $this->subscribe('afterSurveyComplete');
-            $this->subscribe('beforeSurveySettings');
             $this->subscribe('afterModelDelete');
             $this->subscribe('newDirectRequest');
         }
@@ -93,90 +92,6 @@
             }
         }
 
-        public function beforeSurveySettings()
-        {
-            $event = $this->event;
-            try {
-                $items[''] = "";
-                /** @var Response $response */
-                foreach($this->api->getResponses($event->get('survey'), [], 'submitdate is not null', [
-                    'limit' => 5
-                ]) as $response) {
-                    $label = "#{$response->id}";
-                    /** @var Token $token */
-                    if (null !== $token = $response->getRelated('token')) {
-                        $label .= " by {$token->firstname} {$token->firstname}";
-                    }
-                    $label .= " on {$response->submitdate}";
-                    $items[$response->id] = $label;
-                }
-
-            } catch(\Throwable $e) {
-                $items = [];
-            }
-
-            if (empty($items)) {
-                return;
-            }
-
-            $settings = [
-                'name' => get_class($this),
-                'settings' => [
-                    'manualSubmit' => [
-                        'type' => 'select',
-                        'label' => 'Manual submission: ',
-                        'options' => $items,
-                        'selectOptions' => [
-                            'placeholder' => "Pick a response for submission."
-                        ]
-                    ],
-                    'submitButton' => [
-                        'type' => 'link',
-                        'label' => 'Do it',
-                        'link' => $this->api->createUrl('plugins/direct', [
-                            'plugin' => $this->getName(),
-                            'function' => 'manualSubmit',
-                            'surveyId' => $this->event->get('survey')
-                        ]),
-                        'htmlOptions' => [
-                            'id' => 'manualSubmit',
-                            'onclick' => <<<JS
-return (function() {
-     var url = $('#manualSubmit').attr("href")
-     $('#manualSubmit').css('enabled', false);
-     
-     $.post(url, {
-        responseId : $('[name="plugin[Submission][manualSubmit]"]').val()
-     }, function(data) { 
-         var \$div = $('<div>')
-         $('<iframe>').attr('srcdoc', data).css({
-             width: '100%',
-             height: '100%'
-         }).appendTo(\$div);
-         \$div.dialog({
-             width: 500,
-             height: 500,
-         });
-         $('#manualSubmit').css('enabled', true);
-     });
-     return false;
-})();
-
-JS
-                            ,
-                            'style' => implode(';', [
-                                'border-radius: 5px',
-                                'background-color: green'
-
-                            ]),
-
-                        ]
-
-                    ]
-                ],
-            ];
-            $event->set("surveysettings.{$this->id}", $settings);
-        }
         /**
          * This event is fired after the survey has been completed.
          * @param PluginEvent $event
@@ -219,7 +134,7 @@ JS
             );
             if ($this->get('apiKey', null, null, false))
             {
-                $headers[] = "Authorization: Bearer " . $this->get('apiKey', null, null, '');
+                $headers[] = "Authorization: Be:arer " . $this->get('apiKey', null, null, '');
             }
             $context = stream_context_create(array('http' => array(
                 'method' => 'DELETE',
